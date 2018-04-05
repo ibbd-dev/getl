@@ -29,12 +29,14 @@ var similarCmd = &cobra.Command{
 `,
 	Example: ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		data, err := params.ReadAll()
-		if err != nil {
-			panic(err)
-		}
+		/*
+			data, err := params.ReadAll()
+			if err != nil {
+				panic(err)
+			}
 
-		params.Write(data)
+			params.Write(data)
+		*/
 		fmt.Println("similar called")
 	},
 }

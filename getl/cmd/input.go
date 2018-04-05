@@ -16,10 +16,13 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/ibbd-dev/getl/common"
 	"github.com/ibbd-dev/getl/input"
+	"github.com/ibbd-dev/getl/tools/csv"
 	"github.com/spf13/cobra"
 )
 
@@ -53,6 +56,18 @@ var inputCmd = &cobra.Command{
 		if !is_in {
 			panic("非法的输入类型")
 		}
+
+		var err error
+		if inputParams.Type == common.TypeCSV {
+			if inputParams.Filename == "" {
+				panic("文件名不能为空")
+			}
+
+			err = inputCSV()
+			if err != nil {
+				panic(err)
+			}
+		}
 	},
 }
 
@@ -65,4 +80,32 @@ func init() {
 	// and all subcommands, e.g.:
 	inputCmd.PersistentFlags().StringVar(&inputParams.Filename, "filename", "", "文件名")
 	inputCmd.PersistentFlags().StringVar(&inputParams.Type, "type", common.TypeCSV, "输入类型，支持的类型："+supportInputTypes)
+}
+
+func inputCSV() (err error) {
+	fmt.Println("Begin parse filename: ", inputParams.Filename)
+	file, err := os.Open(inputParams.Filename)
+	if err != nil {
+		fmt.Println("Open Error: ", err)
+		return err
+	}
+	defer file.Close()
+
+	pipe := common.NewPipelineIO()
+	reader := csv.NewMapReader(file)
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			fmt.Println("Read Error: ", err, "   Filename: ", inputParams.Filename)
+			return err
+		}
+
+		if err = pipe.WriteMapString(record); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
