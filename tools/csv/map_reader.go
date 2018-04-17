@@ -7,23 +7,34 @@ import (
 	"io"
 )
 
-// A Reader reads records from a CSV-encoded file.
 type MapReader struct {
 	Reader     *csv.Reader
 	fieldnames []string
 }
 
-// NewMapReader returns a new Reader that reads from r.
 func NewMapReader(r io.Reader) *MapReader {
 	return &MapReader{
 		Reader: csv.NewReader(r),
 	}
 }
 
+// SetFieldnames 指定csv文件的字段名
+// 如果不指定的话，则默认使用csv文件的第一行作为字段名
 func (r *MapReader) SetFieldnames(fieldnames []string) {
 	r.fieldnames = fieldnames
 }
 
+func (r *MapReader) GetFieldnames() (fieldnames []string, err error) {
+	if len(r.fieldnames) == 0 {
+		// 如果没有设置字段名，则默认为csv的第一行为字段名
+		if r.fieldnames, err = r.Reader.Read(); err != nil {
+			return nil, err
+		}
+	}
+	return r.fieldnames, nil
+}
+
+// Read 读取一行记录
 func (r *MapReader) Read() (record map[string]string, err error) {
 	if len(r.fieldnames) == 0 {
 		// 如果没有设置字段名，则默认为csv的第一行为字段名
@@ -51,7 +62,7 @@ func (r *MapReader) Read() (record map[string]string, err error) {
 	return record, err
 }
 
-// ReadAll reads all the remaining records from r. Each record is a map of column name to field value.
+// ReadAll 读取全部的内容
 func (r *MapReader) ReadAll() (records []map[string]string, err error) {
 	var record map[string]string
 	for record, err = r.Read(); err == nil; record, err = r.Read() {
